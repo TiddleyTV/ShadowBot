@@ -1,8 +1,9 @@
 # ShadowBot.py
 
 import os
-import discord
 import logging
+
+from discord.ext import commands 
 from dotenv import load_dotenv
 
 # Set up Logging
@@ -16,27 +17,22 @@ logger.addHandler(handler)
 # Load the bot's Discord Token
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+print(f'{TOKEN} has connected to Discord!')
 
-client = discord.Client()
+bot = commands.Bot(command_prefix='!sb ')
 
-@client.event
+@bot.command(name='echo', help='Echos the message back to a user')
+async def echo(ctx, *args):
+	# Echo the message back to the user 
+	response = ""
+	for arg in args:
+		response = response + " " + arg
+	await ctx.send(response)
+
+@bot.event
 async def on_ready():
-	print(f'{client.user} is connected to the following guilds:')
-	for guild in client.guilds:
+	print(f'{bot.user} is connected to the following guilds:')
+	for guild in bot.guilds:
 		print(f'{guild.name}(id: {guild.id})')
 
-@client.event
-async def on_message(message):
-	if message.author == client.user:
-		return
-
-	# Base Trigger.  Send Help Message
-	if message.content == '!sb':
-		await message.channel.send('Hello!')
-
-	# Echo the message back to the user 
-	if message.content.startswith('!sb echo'):
-		new_message = message.content.replace('!sb echo', '', 1)
-		await message.channel.send(new_message)
-
-client.run(TOKEN)
+bot.run(TOKEN)
