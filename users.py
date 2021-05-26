@@ -6,8 +6,6 @@ def check_user_exists(cursor,guild,userid):
 		return True
 	return False
 
-
-
 def add_user(cursor,guild,userid):
 	# If user exists, leave their record alone
 	if check_user_exists(cursor,guild,userid):
@@ -49,3 +47,18 @@ def get_wow_main(cursor,guild,userid):
 	return False
 
 
+def update_user_seen(cursor,guild,userid):
+	if check_user_exists(cursor,guild,userid):
+		query = "UPDATE users SET last_seen = NOW() WHERE discord_name = %s AND discord_guild = %s"
+		args = (str(userid),str(guild))
+		cursor.execute(query,args)
+		return True
+	return False
+
+def update_user_status(cursor,userid):
+	if check_user_status(cursor,userid):
+		query = "UPDATE users SET last_seen = NOW() WHERE discord_name = %s"
+		args = (str(userid),str(guild))
+		cursor.execute(query,args)
+		return True
+	return False

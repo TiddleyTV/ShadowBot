@@ -14,12 +14,16 @@ from users import *
 
 
 
+
 # Set up Logging
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+# Set up Intents
+intents = discord.Intents.all()
 
 
 # Load the bot's Discord Token
@@ -43,7 +47,7 @@ cursor = conn.cursor()
 
 
 # Setup Command Prefix
-bot = commands.Bot(command_prefix='!sb ')
+bot = commands.Bot(command_prefix='!sb ', intents = intents)
 
 @bot.command(name='echo', help='Echos the message back to a user')
 async def echo(ctx, *args):
@@ -116,16 +120,22 @@ async def on_ready():
 		print(f'{guild.name}(id: {guild.id})')
 
 @bot.event
+async def on_member_update(before,after):
+	guild = after.guild
+	userid = str(after.name) + "#" + str(after.discriminator)
+	update_user_seen(cursor,guild,userid)
+
+	
+@bot.event
 async def on_message(message):
 	if message.author == bot.user:
 		return
 	guild = message.guild
 	userid = message.author
-	if check_user_exists(cursor,guild,userid):
-		print("Existing user!\nGuild: " + str(guild) + "\nUser: " + str(userid) + "\n")
+	if check_user_exists(cursor,guild,userid) is False:
+		add_user(cursor,userid)
 	else: 
-		print("Adding user!\nGuild: " + str(guild) + "\nUser: " + str(userid) + "\n")
-		add_user(cursor,guild,userid)
+		update_user_seen(cursor,guild,userid)
 
 	# Add this or the bot doesn't execute any commands
 	await bot.process_commands(message)
