@@ -55,6 +55,15 @@ def update_user_seen(cursor,guild,userid):
 		return True
 	return False
 
+def get_user_seen(cursor,guild,userid):
+	if check_user_exists(cursor,guild,userid):
+		query = "SELECT last_seen FROM users WHERE discord_name = %s AND discord_guild = %s"
+		args = (str(userid),str(guild))
+		cursor.execute(query, args)
+		row = cursor.fetchone()
+		time = str(row[0])
+		return time
+
 def update_user_status(cursor,userid):
 	if check_user_status(cursor,userid):
 		query = "UPDATE users SET last_seen = NOW() WHERE discord_name = %s"
@@ -62,3 +71,10 @@ def update_user_status(cursor,userid):
 		cursor.execute(query,args)
 		return True
 	return False
+
+
+def replace_user_name(cursor,before,after):
+	query = "UPDATE users SET discord_name = %s WHERE discord_name = %s"
+	args = (str(after,before))
+	cursor.execute(query,args)
+	return True

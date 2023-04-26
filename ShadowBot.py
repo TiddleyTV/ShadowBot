@@ -65,7 +65,8 @@ async def setmain(ctx, wowmain=None, userid: discord.Member=None):
 	if userid is None:
 		userid = ctx.message.author
 	author = ctx.message.author
-	guild = ctx.message.guild
+	guildid = ctx.message.guild
+	guild = guildid.id
 
 	# A user can set their own wow main.
 	# An admin can set anybodies wow main.
@@ -95,7 +96,8 @@ async def setmain(ctx, wowmain=None, userid: discord.Member=None):
 async def getmain(ctx, wowmain=None, userid: discord.Member=None):
 	if userid is None:
 		userid = ctx.message.author
-	guild = ctx.message.guild
+	guildid = ctx.message.guild
+	guild = guildid.id
 	wowmain = get_wow_main(cursor,guild,userid)
 	if wowmain is None:
 		response = f"{userid.mention}'s WoW main is not known."
@@ -103,15 +105,19 @@ async def getmain(ctx, wowmain=None, userid: discord.Member=None):
 		response = f"{userid.mention}'s WoW main is {wowmain}."
 	await ctx.send(response)
 
+@bot.command(name='seen', help='Get the last time someone was seen')
+async def seen(ctx, userid: discord.Member=None):
+	if userid is None:
+		userid = ctx.message.author
+	guildid = ctx.message.guild
+	guild = guildid.id
+	if check_user_exists(cursor,guild,userid) is False:
+		response = f"{userid.mention} was not found."
+	else:
+		time = get_user_seen(cursor,guild,userid)
+		response = f"{userid.mention} was last seen at {time}."
+	await ctx.send(response)
 
-
-@bot.command(name='apply', help='Apply To Join')
-async def apply(ctx, *args):
-	channel = ctx.channel.name
-	if channel != 'applications':
-		await ctx.send("That command does not work here.")
-		return
-	await ctx.send("Apply")
 
 @bot.event
 async def on_ready():
@@ -121,19 +127,35 @@ async def on_ready():
 
 @bot.event
 async def on_member_update(before,after):
-	guild = after.guild
+	guildid = after.guild
+	guild = guildid.id
+	userid = str(after.name) + "#" + str(after.discriminator)
+	print(userid + ' Updated')
+	update_user_seen(cursor,guild,userid)
+
+@bot.event
+async def on_presence_update(before,after):
+	guildid = after.guild
+	guild = guildid.id
 	userid = str(after.name) + "#" + str(after.discriminator)
 	update_user_seen(cursor,guild,userid)
 
-	
+@bot.event
+async dev on_user_update(before,after):
+	userid_before = str(before.name) + "#" + str(before.discrinator)
+	userid_after = str(after.name) + "#" + str(after.discrinator)
+	replace_user_name(userid_before,userid_after)
+
 @bot.event
 async def on_message(message):
 	if message.author == bot.user:
 		return
-	guild = message.guild
+	guildid = message.guild
+	guild = guildid.id
+	#guild = guild.replace("'", "\\'")
 	userid = message.author
 	if check_user_exists(cursor,guild,userid) is False:
-		add_user(cursor,userid)
+		add_user(cursor,guild,userid)
 	else: 
 		update_user_seen(cursor,guild,userid)
 
